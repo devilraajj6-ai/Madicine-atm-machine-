@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b6b4f">
+<title>Medicine ATM</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:Arial,Helvetica,sans-serif;
+  background:linear-gradient(135deg,#e8fff6,#eef7ff);
+  color:#123;min-height:100vh;
+}
+.app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.card{
+  width:min(100%,560px);background:#fff;border-radius:26px;
+  box-shadow:0 15px 45px rgba(0,0,0,.15);overflow:hidden;
+}
+.header{
+  background:linear-gradient(135deg,#087f5b,#0b5fa5);
+  color:#fff;padding:24px 20px;text-align:center;
+}
+.logo{font-size:46px;margin-bottom:5px}
+.header h1{margin:0;font-size:28px}
+.header p{margin:7px 0 0;opacity:.9}
+.screen{padding:24px;min-height:560px}
+.step{display:none}.step.active{display:block}
+h2{text-align:center;margin:8px 0 20px;font-size:24px}
+.subtitle{text-align:center;color:#667;margin:-8px 0 22px}
+button,.option{
+  width:100%;border:0;border-radius:16px;padding:15px 16px;
+  margin:8px 0;font-size:17px;font-weight:700;cursor:pointer;
+  transition:.2s;touch-action:manipulation;
+}
+button:active,.option:active{transform:scale(.98)}
+.primary{background:#087f5b;color:white}
+.secondary{background:#eaf5f1;color:#087f5b}
+.blue{background:#0b5fa5;color:white}
+.skip{background:#f2f2f2;color:#555}
+.language-grid,.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.language-grid button,.type-grid button{margin:0;padding:22px 10px}
+.medicine-list{display:grid;gap:10px}
+.medicine{
+  text-align:left;background:#f7fbfa;border:2px solid #dceee8;
+  color:#123;padding:15px;border-radius:15px;
+}
+.medicine small{display:block;color:#6b7773;margin-top:4px;font-weight:400}
+.icon{font-size:28px;margin-right:8px;vertical-align:middle}
+.notice{
+  padding:13px;border-radius:13px;background:#fff8df;color:#765b00;
+  margin:14px 0;font-size:14px;line-height:1.5;
+}
+.scanner{
+  position:relative;background:#101616;border-radius:20px;
+  overflow:hidden;aspect-ratio:1/1;margin:10px 0 16px;
+}
+video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-box{
+  position:absolute;inset:16%;border:3px solid #fff;border-radius:15px;
+  box-shadow:0 0 0 999px rgba(0,0,0,.28);
+}
+.scan-line{
+  position:absolute;left:18%;right:18%;height:3px;background:#35e39c;
+  top:20%;box-shadow:0 0 12px #35e39c;animation:scan 2s linear infinite;
+}
+@keyframes scan{0%{top:20%}50%{top:78%}100%{top:20%}}
+.status{text-align:center;font-size:14px;color:#667;min-height:20px}
+.result{
+  background:#eefaf5;border:1px solid #cde9dd;border-radius:15px;
+  padding:14px;margin:12px 0;word-break:break-word;
+}
+.success{text-align:center;padding-top:55px}
+.success .big{font-size:75px}
+.success h2{color:#087f5b}
+.footer{text-align:center;font-size:12px;color:#87918d;margin-top:18px}
+.full-btn{margin-top:4px}
+@media(max-width:420px){
+  .screen{padding:18px;min-height:520px}
+  .header h1{font-size:24px}
+  h2{font-size:21px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<div class="card">
+
+<div class="header">
+  <div class="logo">💊</div>
+  <h1>Medicine ATM</h1>
+  <p id="headerSub">Smart Pharmacy Medicine Dispensing System</p>
+</div>
+
+<div class="screen">
+
+<!-- Welcome -->
+<section id="welcome" class="step active">
+  <h2>Welcome</h2>
+  <p class="subtitle" id="welcomeText">Welcome to the Medicine ATM</p>
+  <div style="text-align:center;font-size:70px;margin:25px 0">🏥💊</div>
+  <button class="primary" onclick="go('language')">Start / शुरू करें</button>
+  <button class="secondary full-btn" onclick="toggleFullscreen()">⛶ Full Screen</button>
+  <div class="notice">For demonstration/educational use. Medicine dispensing should follow applicable prescription and pharmacy rules.</div>
+  <div class="footer">Pharmacy Project • Medicine Dispensing & Packing</div>
+</section>
+
+<!-- Language -->
+<section id="language" class="step">
+  <h2>Select Language</h2>
+  <p class="subtitle">भाषा चुनें / Choose your language</p>
+  <div class="language-grid">
+    <button class="primary" onclick="setLanguage('en')">🇬🇧 English</button>
+    <button class="blue" onclick="setLanguage('hi')">🇮🇳 हिन्दी</button>
+  </div>
+</section>
+
+<!-- Type -->
+<section id="type" class="step">
+  <h2 id="typeTitle">Select Medicine Type</h2>
+  <p class="subtitle" id="typeSub">Choose tablet or capsule</p>
+  <div class="type-grid">
+    <button class="primary" onclick="selectType('Tablet')">💊<br>Tablet</button>
+    <button class="blue" onclick="selectType('Capsule')">💊<br>Capsule</button>
+  </div>
+</section>
+
+<!-- Medicine -->
+<section id="medicine" class="step">
+  <h2 id="medicineTitle">Select Medicine</h2>
+  <p class="subtitle" id="medicineSub">Common examples</p>
+  <div id="medicineList" class="medicine-list"></div>
+  <button class="secondary" onclick="go('type')">← Back</button>
+</section>
+
+<!-- QR -->
+<section id="qr" class="step">
+  <h2 id="qrTitle">Scan QR Code</h2>
+  <p class="subtitle" id="qrSub">Allow camera access and place the QR code inside the frame.</p>
+
+  <div class="scanner">
+    <video id="video" playsinline autoplay muted></video>
+    <div class="scan-box"></div>
+    <div class="scan-line"></div>
+  </div>
+
+  <canvas id="canvas" hidden></canvas>
+  <div id="scanStatus" class="status">Camera is ready.</div>
+
+  <button class="primary" onclick="startCamera()">📷 Scan QR</button>
+  <button class="skip" onclick="skipQR()">Skip QR / QR छोड़ें</button>
+  <button class="secondary" onclick="go('medicine')">← Back</button>
+</section>
+
+<!-- Confirmation -->
+<section id="confirm" class="step">
+  <h2 id="confirmTitle">Confirm Selection</h2>
+  <div class="result">
+    <b id="confirmTypeLabel">Type:</b> <span id="confirmType"></span><br><br>
+    <b id="confirmMedicineLabel">Medicine:</b> <span id="confirmMedicine"></span><br><br>
+    <b>QR:</b> <span id="confirmQR">Skipped</span>
+  </div>
+  <div class="notice" id="confirmNotice">
+    Please verify the medicine and prescription before dispensing.
+  </div>
+  <button class="primary" onclick="finish()">✓ Confirm & Dispense</button>
+  <button class="secondary" onclick="go('medicine')">← Change Medicine</button>
+</section>
+
+<!-- Thank you -->
+<section id="done" class="step success">
+  <div class="big">✅</div>
+  <h2 id="doneTitle">Thank You!</h2>
+  <p id="doneText">Your request has been processed successfully.</p>
+  <div style="font-size:24px;margin:22px 0">💊 🏥 ❤️</div>
+  <h3 id="wellText">Have a great day & Get Well Soon! 🌿</h3>
+  <button class="primary" onclick="location.reload()">Start Again</button>
+</section>
+
+</div>
+</div>
+</div>
+
+<script>
+let lang='en';
+let selectedType='';
+let selectedMedicine='';
+let scannedQR='';
+let stream=null;
+let scanning=false;
+
+const medicines={
+  Tablet:[
+    ['Paracetamol','Pain & fever relief'],
+    ['Cetirizine','Allergy relief'],
+    ['Vitamin C','Vitamin supplement'],
+    ['Omeprazole','Acidity / gastric medicine']
+  ],
+  Capsule:[
+    ['Amoxicillin','Antibiotic — prescription use'],
+    ['Pantoprazole','Acidity / gastric medicine'],
+    ['Vitamin D3','Vitamin supplement'],
+    ['Doxycycline','Antibiotic — prescription use']
+  ]
+};
+
+const T={
+ en:{
+  welcome:'Welcome to the Medicine ATM',
+  type:'Select Medicine Type', sub:'Choose tablet or capsule',
+  med:'Select Medicine', medsub:'Common examples',
+  qr:'Scan QR Code', qrsub:'Allow camera access and place the QR code inside the frame.',
+  confirm:'Confirm Selection', done:'Thank You!',
+  doneText:'Your request has been processed successfully.',
+  well:'Have a great day & Get Well Soon! 🌿',
+  typeL:'Type:', medL:'Medicine:',
+  notice:'Please verify the medicine and prescription before dispensing.',
+  camera:'Camera is ready.', denied:'Camera permission was denied or unavailable.',
+  found:'QR code detected!', noCamera:'Camera could not be started.'
+ },
+ hi:{
+  welcome:'Medicine ATM में आपका स्वागत है',
+  type:'दवा का प्रकार चुनें', sub:'टैबलेट या कैप्सूल चुनें',
+  med:'दवा चुनें', medsub:'कुछ सामान्य उदाहरण',
+  qr:'QR Code स्कैन करें', qrsub:'कैमरा की अनुमति दें और QR को फ्रेम के अंदर रखें।',
+  confirm:'चयन की पुष्टि करें', done:'धन्यवाद!',
+  doneText:'आपका अनुरोध सफलतापूर्वक पूरा हो गया है।',
+  well:'आपका दिन शुभ हो और जल्द स्वस्थ हों! 🌿',
+  typeL:'प्रकार:', medL:'दवा:',
+  notice:'दवा देने से पहले दवा और प्रिस्क्रिप्शन की पुष्टि करें।',
+  camera:'कैमरा तैयार है।', denied:'कैमरा अनुमति नहीं मिली या कैमरा उपलब्ध नहीं है।',
+  found:'QR Code मिल गया!', noCamera:'कैमरा शुरू नहीं हो सका।'
+ }
+};
+
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang=lang==='hi'?'hi-IN':'en-IN';
+  u.rate=.88; u.pitch=.9; u.volume=1;
+  const voices=speechSynthesis.getVoices();
+  const wanted=lang==='hi'
+    ? voices.find(v=>/hi-IN/i.test(v.lang))
+    : voices.find(v=>/en-IN/i.test(v.lang)) || voices.find(v=>/en/i.test(v.lang));
+  if(wanted) u.voice=wanted;
+  speechSynthesis.speak(u);
+}
+
+function go(id){
+  stopCamera();
+  document.querySelectorAll('.step').forEach(x=>x.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function setLanguage(l){
+  lang=l;
+  const t=T[lang];
+  document.getElementById('welcomeText').textContent=t.welcome;
+  document.getElementById('typeTitle').textContent=t.type;
+  document.getElementById('typeSub').textContent=t.sub;
+  speak(lang==='hi'?'हिन्दी भाषा चुनी गई है।':'English language selected.');
+  go('type');
+}
+
+function selectType(type){
+  selectedType=type;
+  renderMedicines();
+  speak(lang==='hi'
+    ? (type==='Tablet'?'टैबलेट चुना गया है।':'कैप्सूल चुना गया है।')
+    : type+' selected.');
+  go('medicine');
+}
+
+function renderMedicines(){
+  const t=T[lang];
+  document.getElementById('medicineTitle').textContent=t.med;
+  document.getElementById('medicineSub').textContent=t.medsub;
+  const box=document.getElementById('medicineList');
+  box.innerHTML='';
+  medicines[selectedType].forEach(m=>{
+    const b=document.createElement('button');
+    b.className='medicine';
+    b.innerHTML='<span class="icon">💊</span><b>'+m[0]+'</b><small>'+m[1]+'</small>';
+    b.onclick=()=>selectMedicine(m[0]);
+    box.appendChild(b);
+  });
+}
+
+function selectMedicine(name){
+  selectedMedicine=name;
+  scannedQR='';
+  updateConfirm();
+  speak(lang==='hi'?name+' चुनी गई है। अब QR कोड स्कैन करें।':name+' selected. Now scan the QR code.');
+  go('qr');
+}
+
+function updateConfirm(){
+  const t=T[lang];
+  document.getElementById('confirmTitle').textContent=t.confirm;
+  document.getElementById('confirmTypeLabel').textContent=t.typeL;
+  document.getElementById('confirmMedicineLabel').textContent=t.medL;
+  document.getElementById('confirmNotice').textContent=t.notice;
+  document.getElementById('confirmType').textContent=selectedType;
+  document.getElementById('confirmMedicine').textContent=selectedMedicine;
+  document.getElementById('confirmQR').textContent=scannedQR||'Skipped';
+}
+
+async function startCamera(){
+  stopCamera();
+  const status=document.getElementById('scanStatus');
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    status.textContent=T[lang].noCamera;
+    speak(T[lang].noCamera);
+    return;
+  }
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},
+      audio:false
+    });
+    const video=document.getElementById('video');
+    video.srcObject=stream;
+    await video.play();
+    scanning=true;
+    status.textContent=T[lang].camera;
+    scanFrame();
+  }catch(e){
+    status.textContent=T[lang].denied;
+    speak(T[lang].denied);
+  }
+}
+
+function scanFrame(){
+  if(!scanning) return;
+  const video=document.getElementById('video');
+  const canvas=document.getElementById('canvas');
+  if(video.readyState>=2 && video.videoWidth){
+    canvas.width=video.videoWidth;
+    canvas.height=video.videoHeight;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    if(typeof jsQR==='function'){
+      const img=ctx.getImageData(0,0,canvas.width,canvas.height);
+      const code=jsQR(img.data,img.width,img.height,{inversionAttempts:'dontInvert'});
+      if(code && code.data){
+        scannedQR=code.data;
+        scanning=false;
+        stopCamera();
+        document.getElementById('scanStatus').textContent=T[lang].found;
+        speak(T[lang].found);
+        updateConfirm();
+        setTimeout(()=>go('confirm'),500);
+        return;
+      }
+    }
+  }
+  requestAnimationFrame(scanFrame);
+}
+
+function skipQR(){
+  scannedQR='';
+  updateConfirm();
+  speak(lang==='hi'?'QR कोड छोड़ा गया है।':'QR code skipped.');
+  go('confirm');
+}
+
+function stopCamera(){
+  scanning=false;
+  if(stream){
+    stream.getTracks().forEach(t=>t.stop());
+    stream=null;
+  }
+  const video=document.getElementById('video');
+  if(video) video.srcObject=null;
+}
+
+function finish(){
+  stopCamera();
+  const t=T[lang];
+  document.getElementById('doneTitle').textContent=t.done;
+  document.getElementById('doneText').textContent=t.doneText;
+  document.getElementById('wellText').textContent=t.well;
+  go('done');
+  speak(lang==='hi'?'धन्यवाद। आपका अनुरोध सफलतापूर्वक पूरा हो गया है। जल्द स्वस्थ हों।':'Thank you. Your request has been processed successfully. Get well soon.');
+}
+
+async function toggleFullscreen(){
+  try{
+    if(!document.fullscreenElement){
+      await document.documentElement.requestFullscreen();
+    }else{
+      await document.exitFullscreen();
+    }
+  }catch(e){}
+}
+
+window.addEventListener('beforeunload',stopCamera);
+if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=()=>speechSynthesis.getVoices();
+</script>
+</body>
+</html>
